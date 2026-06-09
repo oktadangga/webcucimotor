@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J'Wash | Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --admin-bg: #0a0a0a;
+            --card-bg: #161616;
+            --accent: #eab308;
+        }
+
+        body {
+            background-color: var(--admin-bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            padding-top: 80px;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .admin-title h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-title p {
+            color: #888;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid #222;
+        }
+
+        .stat-card h4 {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .order-table-wrapper {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            border: 1px solid #222;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #1e1e1e;
+            padding: 1.2rem;
+            font-size: 0.9rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 1.2rem;
+            border-bottom: 1px solid #222;
+            font-size: 0.95rem;
+        }
+
+        tr:hover {
+            background: #1a1a1a;
+        }
+
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending { background: rgba(234, 179, 8, 0.1); color: #eab308; }
+        .status-completed { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+
+        .btn-action {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s;
+            margin-right: 0.5rem;
+        }
+
+        .btn-action:hover {
+            color: white;
+        }
+
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--admin-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 1.5rem;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #222;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            background: #000;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-size: 1.2rem;
+            letter-spacing: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-card">
+            <i data-lucide="lock" style="width: 48px; height: 48px; color: var(--accent); margin-bottom: 1rem;"></i>
+            <h2>Admin Login</h2>
+            <p>Masuk dengan akun admin untuk memantau booking dan transaksi.</p>
+            <p id="login-warning" style="color: #f87171; font-size: 0.95rem; margin-bottom: 1rem; display: none;"></p>
+            <input type="text" id="admin-username" placeholder="Username" autocomplete="username">
+            <input type="password" id="admin-password" placeholder="Password" autocomplete="current-password">
+            <button class="btn btn-primary" onclick="loginAdmin()" style="width: 100%;">Masuk</button>
+        </div>
+    </div>
+
+    <nav>
+        <div class="container">
+            <a href="index.html" class="logo">J'WASH ADMIN</a>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="pos.html" class="btn btn-outline" style="padding: 0.5rem 1rem; margin-left: 0;">Buka Kasir (POS)</a>
+                <span id="admin-name" style="color: #888;">Owner Mode</span>
+                <button onclick="logout()" class="btn btn-outline" style="padding: 0.5rem 1rem;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <div class="admin-title">
+                <h1>Antrean Booking Online</h1>
+                <p>Pantau semua booking cuci motor dari pelanggan lewat web.</p>
+            </div>
+            <button onclick="refreshData()" class="btn btn-outline">
+                <i data-lucide="refresh-cw" style="width: 16px; vertical-align: middle; margin-right: 5px;"></i> Refresh
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Total Booking</h4>
+                <div class="value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+                <h4>Antrean Menunggu</h4>
+                <div class="value" id="stat-pending">0</div>
+            </div>
+            <div class="stat-card">
+                <h4>Omzet Kasir Hari Ini</h4>
+                <div class="value" id="stat-revenue" style="color: #22c55e;">Rp 0</div>
+            </div>
+            <div class="stat-card">
+                <h4>Total Cuci Kasir</h4>
+                <div class="value" id="stat-sales-count">0 Motor</div>
+            </div>
+        </div>
+
+        <div class="order-table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Pelanggan</th>
+                        <th>Motor</th>
+                        <th>Paket</th>
+                        <th>WhatsApp</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="order-list">
+                    <!-- Data akan muncul di sini -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bagian POS Log -->
+        <div class="admin-header" style="margin-top: 3.5rem; margin-bottom: 1.5rem;">
+            <div class="admin-title">
+                <h1>Transaksi Kasir (POS)</h1>
+                <p>Riwayat transaksi yang dilakukan langsung di kasir J'Wash.</p>
+            </div>
+            <button onclick="clearSales()" class="btn btn-outline" style="border-color: #ef4444; color: #ef4444; margin-left: 0;">
+                <i data-lucide="trash-2" style="width: 16px; vertical-align: middle; margin-right: 5px;"></i> Hapus Semua Transaksi
+            </button>
+        </div>
+
+        <div class="order-table-wrapper" style="margin-bottom: 3rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No Struk</th>
+                        <th>Tanggal</th>
+                        <th>Pelanggan</th>
+                        <th>Motor / Nopol</th>
+                        <th>Paket</th>
+                        <th>Tambahan</th>
+                        <th>Total</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="sales-list">
+                    <!-- Data transaksi akan muncul di sini -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const TOKEN_KEY = 'jwash_token';
+        const API_BASE = window.location.origin && window.location.origin !== 'null'
+            ? `${window.location.origin}/api`
+            : 'http://localhost:3000/api';
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY);
+        }
+
+        function setToken(token) {
+            localStorage.setItem(TOKEN_KEY, token);
+        }
+
+        function logout() {
+            localStorage.removeItem(TOKEN_KEY);
+            window.location.reload();
+        }
+
+        async function apiFetch(endpoint, options = {}) {
+            const token = getToken();
+            const headers = options.headers || {};
+            headers['Content-Type'] = 'application/json';
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
+            let response;
+            try {
+                response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers
+                });
+            } catch (err) {
+                throw new Error('Tidak dapat terhubung ke server API. Pastikan backend dijalankan di http://localhost:3000');
+            }
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || 'Terjadi kesalahan API');
+            }
+            return response.json();
+        }
+
+        async function loginAdmin() {
+            const username = document.getElementById('admin-username').value.trim();
+            const password = document.getElementById('admin-password').value.trim();
+            if (!username || !password) {
+                return alert('Username dan password harus diisi');
+            }
+
+            try {
+                const result = await apiFetch('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+                setToken(result.token);
+                document.getElementById('login-overlay').style.display = 'none';
+                loadOrders();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                const bookingRes = await apiFetch('/bookings');
+                const salesRes = await apiFetch('/sales');
+                const bookings = bookingRes.bookings || [];
+                const sales = salesRes.sales || [];
+
+                document.getElementById('stat-total').innerText = bookings.length;
+                document.getElementById('stat-pending').innerText = bookings.filter((o) => o.status === 'Pending').length;
+
+                const list = document.getElementById('order-list');
+                list.innerHTML = '';
+                bookings.forEach((order) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color: #888;">${order.date}</td>
+                        <td style="font-weight: 600;">${order.name}</td>
+                        <td>${order.motor}</td>
+                        <td><span style="color: var(--accent)">${order.package}</span></td>
+                        <td><a href="https://wa.me/${order.wa}" target="_blank" style="color: #22c55e;">${order.wa}</a></td>
+                        <td><span class="status-badge status-pending">${order.status}</span></td>
+                        <td>
+                            <button class="btn-action" onclick="deleteOrder(${order.id})"><i data-lucide="trash-2"></i></button>
+                        </td>
+                    `;
+                    list.appendChild(tr);
+                });
+
+                const todayStr = new Date().toLocaleDateString('id-ID');
+                const todaySales = sales.filter((s) => s.date === todayStr);
+                const totalRevenue = todaySales.reduce((sum, s) => sum + s.total, 0);
+
+                document.getElementById('stat-revenue').innerText = `Rp ${totalRevenue.toLocaleString('id-ID')}`;
+                document.getElementById('stat-sales-count').innerText = `${todaySales.length} Motor`;
+
+                const salesList = document.getElementById('sales-list');
+                salesList.innerHTML = '';
+                sales.forEach((sale) => {
+                    const addonsText = sale.addons && sale.addons.length > 0 ? sale.addons.join(', ') : '-';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 700; color: var(--accent);">${sale.receipt_no}</td>
+                        <td style="color: #888;">${sale.date}</td>
+                        <td style="font-weight: 600;">${sale.customer}</td>
+                        <td>${sale.plate !== '-' ? `${sale.plate} / ${sale.motor}` : sale.motor}</td>
+                        <td>${sale.package}</td>
+                        <td style="font-size: 0.85rem; color: #a0a0a0;">${addonsText}</td>
+                        <td style="font-weight: 700; color: #22c55e;">Rp ${sale.total.toLocaleString('id-ID')}</td>
+                        <td>
+                            <button class="btn-action" onclick="deleteSale(${sale.id})"><i data-lucide="trash-2"></i></button>
+                        </td>
+                    `;
+                    salesList.appendChild(tr);
+                });
+
+                lucide.createIcons();
+            } catch (error) {
+                alert(error.message);
+                if (error.message.toLowerCase().includes('token')) {
+                    logout();
+                }
+            }
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm('Hapus pesanan ini?')) return;
+            try {
+                await apiFetch(`/bookings/${id}`, { method: 'DELETE' });
+                loadOrders();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function deleteSale(id) {
+            if (!confirm('Hapus transaksi ini?')) return;
+            try {
+                await apiFetch(`/sales/${id}`, { method: 'DELETE' });
+                loadOrders();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function clearSales() {
+            if (!confirm('Hapus seluruh riwayat transaksi kasir? Tindakan ini tidak bisa dibatalkan.')) return;
+            try {
+                await apiFetch('/sales', { method: 'DELETE' });
+                loadOrders();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function refreshData() {
+            loadOrders();
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+            if (getToken()) {
+                document.getElementById('login-overlay').style.display = 'none';
+                loadOrders();
+            }
+        };
+    </script>
+</body>
+</html>
